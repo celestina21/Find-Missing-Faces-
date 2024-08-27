@@ -1,0 +1,132 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: cadetblue;
+}
+
+.navbar {
+    display: flex;
+    align-items: center;
+    background-color: rgb(0, 73, 102);
+}
+
+.navbar a {
+    color: white;
+    font-size: large;
+    text-decoration: none;
+    padding: 5px 30px; 
+    position: relative;
+}
+
+/* Underline under tab name when user hovers over it */
+.navbar a::after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: -3px; 
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background-color: transparent;
+    transition: background-color 0.3s ease;
+}
+
+/* Darken the colour of the tab section in the navbar when hovered over*/
+.navbar a:hover {
+    background-color: rgb(3, 100, 138);
+}
+
+.navbar a:hover::after {
+    background-color: white; /* Color of underline on hover */
+}
+
+
+#logo {
+    height: 80px;
+}
+
+#logout {
+    margin-left: auto;
+    margin-right: 50px;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 20px;
+    cursor: pointer;
+    background-color: #eee;
+}
+
+#support {
+    text-decoration-line: underline;
+}
+
+#title {
+    text-align: center;
+    font-size: 40px;
+    margin-top: 20px; 
+    margin-bottom: 20px; 
+}
+
+div {
+    width: 97%;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 20px;
+    border-top: 3px solid black;
+}
+
+h1 {
+    padding-left: 10px;
+    margin-top: 5px;
+    margin-bottom: 20px; 
+}
+
+h2 {
+    padding-left: 10px;
+    margin-top: 0;
+    margin-bottom: 10px; 
+}
+
+p {
+    font-size: 21px;
+    padding: 0px 0px 10px 10px;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+#introduction {
+    position: relative;
+    background-image: url("../images/reunion.jpg");
+    background-size: cover;
+    background-position: center;
+    width: 97.35%;
+    height: 100%;
+    z-index: 1;
+    transition: ease 1s;
+}
+
+/* White, translucent overlay over the background image to make text clearer */
+#introduction::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(225, 225, 225, 0.707); 
+    z-index: -1;
+}
+
+#introduction:hover{
+    background-position: center 15%;
+}
+
+.identifyPersonGuide, .fileMissingGuide, .chatbot {
+    transition: ease 1s;
+}
+
+/* Highlight section in white when hovered over for emphasis */
+.identifyPersonGuide:hover, .fileMissingGuide:hover, .chatbot:hover {
+    background-color: aliceblue;
+}
+

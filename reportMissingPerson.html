@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head> 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Missing Faces</title>
+    <link rel="icon" href="./images/website-logo.png">
+    <link rel = "stylesheet" href = "./css/reportMissingPerson.css?v=1.0">
+    <script src = "./js/reportMissingPerson.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+</head>
+<body onload = "checkAuthState()">
+    <nav class="navbar">
+        <a href="index.html">
+            <img src="./images/website-logo.png" id="logo">
+        </a>
+        <a href="identifyPerson.html">Identify Someone</a>
+        <a href="reportMissingPerson.html">Add Missing Person</a>
+        <a href="profileSearch.html">Search Profiles</a>
+        <button id="logout" onclick="logOut()">Logout</button>
+    </nav>
+    <div id="content">
+        <div id="portraitSide">
+        </div> 
+        <div id = "formSide">
+            <div id="formSpace">
+                <h1>Submit a Profile Here For Future Recognition</h1>
+                <p>You will receive news when a user chooses to notify you should they find a potential match in face.</p>
+                <form>
+                    <button id="uploadButton">Upload Portrait</button>
+                    <input type="file" id="portraitInput" accept="image/*">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" minlength="5" maxlength="100" required>
+                    <label for="last_location">Where they were last seen (optional)</label>
+                    <input type="text" id="last_location" name="last_location" maxlength="100">
+                    <label for="last_seen_date">When they were last seen</label>
+                    <input type="date" id="last_seen_date" name="last_seen_date" min="2000-01-01" required>
+                    <label for="description">Description; any other notable details (optional)</label>
+                    <textarea id = "description" placeholder="What they were last seen wearing, facial features, tattoos, etc." maxlength=500></textarea>
+                    <label for="contact">The mobile number (with country code) of their close contact for notification<br><span id="mobileFormat">Format: +[country code][number] (eg. +766663629)</span></label>
+                    <input type="text" id="contact" name="contact" value="+" minlength="6" maxlength="15" required>
+                    <button id="submit">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

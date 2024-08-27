@@ -1,0 +1,153 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: cadetblue;
+}
+
+.navbar {
+    display: flex;
+    align-items: center;
+    background-color: rgb(0, 73, 102);
+}
+
+.navbar a {
+    color: white;
+    font-size: large;
+    text-decoration: none;
+    padding: 5px 30px; 
+    position: relative;
+}
+
+/* Underline under tab name when user hovers over it */
+.navbar a::after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: -3px; 
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background-color: transparent;
+    transition: background-color 0.3s ease;
+}
+
+/* Darken the colour of the tab section in the navbar when hovered over*/
+.navbar a:hover {
+    background-color: rgb(3, 100, 138);
+}
+
+.navbar a:hover::after {
+    background-color: white; /* Color of underline on hover */
+}
+
+#logo {
+    height: 80px;
+}
+
+#logout {
+    margin-left: auto;
+    margin-right: 50px;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 20px;
+    cursor: pointer;
+    background-color: #eee;
+}
+
+#content {
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 86.5px);
+}
+
+#portraitSide {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-right: 2px solid #ccc;
+    background-color: #848484;
+    overflow: hidden;
+}
+
+#uploadedPortrait {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+#formSide {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 20px;
+    overflow: scroll;
+}
+
+#formSpace h1 {
+    margin-top: 0px;
+    margin-bottom: 5px;
+}
+
+#formSpace p {
+    margin-top: 10px;
+    font-size: larger;
+}
+
+#uploadButton {
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    font-size: 15px;
+    cursor: pointer;
+    background-color: #eee;
+}
+
+#portraitInput {
+    display: none;
+}
+
+#formSpace label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 17px;
+}
+
+#mobileFormat {
+    font-size: 16px;
+}
+
+#formSpace input[type="text"],
+#formSpace input[type="date"],
+#formSpace textarea {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+#formSpace input[type="text"], textarea {
+    font-size: 14px;
+}
+
+#formSpace textarea {
+    height: 100px;
+}
+
+#submit {
+    background-color: #4CAF50;
+    color: white;
+    font-size: larger;
+    width: 48%;
+    padding: 5px;
+    border: none;
+    border-radius: 3px;
+    outline: oldlace 1px solid;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px
+}

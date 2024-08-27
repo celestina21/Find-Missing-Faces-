@@ -1,0 +1,559 @@
+import pymysql
+import os
+import boto3
+from botocore.exceptions import ClientError
+import json
+import base64
+from io import BytesIO
+import random 
+import string
+from datetime import datetime
+
+# Initialize clients
+s3 = boto3.client("s3")
+rekognition = boto3.client("rekognition")
+sns = boto3.client("sns")
+
+# Define collection id for indexed faces
+collection_id = "[collection ID]"
+
+# Define bucket name where portraits are stored 
+bucket_name = "[Bucket name]"
+
+# Database settings from environment variables
+DB_HOST = "[RDS Database ARN]"
+DB_USER = "[User]"
+DB_PASSWORD = "[Password]"
+DB_NAME = "FindMissingPersons" # Assuming FindMissingPersons is the name of the schema 
+    
+# Store the image in S3
+def save_to_s3(image_binary, s3_key):
+    try: 
+        # Specify public read access so that users can see the added portraits
+        s3.put_object(Bucket=bucket_name, Key=s3_key, Body=image_binary, ContentType="image/jpeg", ACL="public-read")
+        # Create s3_url to save to database for future image retrieval
+        s3_url = f"https://{bucket_name}.s3.amazonaws.com/{s3_key}"
+        return s3_url
+    
+    except ClientError as e:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": f"Couldn't save the image\n{e}"})
+            
+        }
+        
+    
+# Send the image to Rekognition for indexing
+def index_portrait(s3_key):
+    try:
+        # Search for duplicate faces in the collection
+        search_response = rekognition.search_faces_by_image(
+            CollectionId = collection_id,
+            Image = {"S3Object": {"Bucket": bucket_name, "Name": s3_key}},
+            FaceMatchThreshold = 100,
+            MaxFaces = 1
+        )
+
+        # If a similar face is found, return the existing face_id. 
+        # This will be used to reject the image later 
+        if search_response["FaceMatches"]:
+            return search_response["FaceMatches"][0]["Face"]["FaceId"]
+
+        # If no similar face is found, index the new face and return this face_id
+        response = rekognition.index_faces(
+            CollectionId = collection_id,
+            Image = {"S3Object": {"Bucket": bucket_name, "Name": s3_key}},
+            DetectionAttributes = ["ALL"]
+        )
+        face_id = response["FaceRecords"][0]["Face"]["FaceId"]
+        return face_id
+
+    except IndexError:
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "No faces detected in the image"})
+        }
+
+    except Exception as e:
+        print(f"Error indexing face: {e}")
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": f"Couldn't index the face for future recognition\n{e}"})
+        }
+
+
+# Generate a unique 5-digit alphanumeric code as part of the topic name for the missing person to make it unique if some profiles have similar names 
+def generate_topic_name(name):
+    code = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+    return f"{code}_{name.replace(' ', '_')}"
+    
+
+# Create a new topic
+def create_sns_topic(name):
+    while True: 
+        topic_name = generate_topic_name(name)
+        try:
+            # List existing topics to check for duplicates
+            topics = sns.list_topics()
+            existing_topic_arns = [t['TopicArn'] for t in topics['Topics']]
+            
+            # Check if topic already exists
+            topic_arn = next((arn for arn in existing_topic_arns if arn.endswith(topic_name)), None)
+            
+            # If no topics already exist, create the topic and return the topic arn
+            if not topic_arn:
+                topic_response = sns.create_topic(Name=topic_name)
+                topic_arn = topic_response["TopicArn"]
+                return topic_arn
+            
+        except ClientError as e:
+            return {
+                "statusCode": 500,
+                "body": json.dumps({"error": f"Couldn't create a topic for your missing person for notifications\n{e}"})
+            }
+
+
+# Subscribe the contact to the topic 
+def subscribe_contact(topic_arn, contact):
+    try:         
+        # Subscribe the contact to the topic using phone number for sms notifications
+        sns.subscribe(
+            TopicArn=topic_arn,
+            Protocol="sms",
+            Endpoint=contact
+        )
+        return None 
+    
+    except ClientError as e:
+        print(f"Error creating or subscribing to SNS topic: {e}")
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": f"Couldn't subscribe your phone number for notifications\n{e}"})
+            
+        }
+
+    
+# Unsubscribe the contact from the topic if they changed phone number
+def unsubscribe_contact(topic_arn, old_contact):
+    try:
+        # List all subscriptions for the topic
+        subscriptions = sns.list_subscriptions_by_topic(TopicArn=topic_arn)
+        # Find the subscription that the contact subscribed to
+        for subscription in subscriptions['Subscriptions']:
+            if subscription['Endpoint'] == old_contact:
+                # Unsubscribe the contact 
+                sns.unsubscribe(SubscriptionArn=subscription['SubscriptionArn'])
+                break
+    except ClientError as e:
+        print(f"Error unsubscribing the contact: {e}")
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": f"Couldn't unsubscribe your number\n{e}"})
+            
+        }
+
+
+# Generate the unique 6-digit alphanumeric key for the missing person 
+def generate_key(connection):
+    while True:
+        try:
+            key = ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+            
+            with connection.cursor() as cursor:
+                select_sql = "SELECT COUNT(*) FROM missing_person WHERE `key` = %s"
+                select_value = (key,)
+                cursor.execute(select_sql, select_value)
+                # Fetch the one row of the result just to check for any same key 
+                result = cursor.fetchone()
+            
+            # If no similar keys, found, return this one
+            if result[0] == 0:
+                return key
+            # Else, regenerate another key until a unique one is generated 
+
+        except Exception as e:
+            return {
+            "statusCode": 500,
+            "body": json.dumps({"error": f"Couldn't generate the key\n{e}"})
+            }
+        
+   
+ # Select the profile data using the person_id
+def select_by_person_id(connection, person_id):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM missing_person WHERE person_id = %s", (person_id,))
+            result = cursor.fetchone()
+            
+            if result:
+                # Convert datetime to string for json 
+                last_seen_date_str = result[6].strftime('%Y-%m-%d') if isinstance(result[6], datetime) else result[6]
+                data = {
+                    "person_id": result[0],
+                    "key": result[1],
+                    "face_id": result[2],
+                    "portrait": result[3],
+                    "name": result[4],
+                    "last_location": result[5],
+                    "last_seen_date": last_seen_date_str,
+                    "description": result[7],
+                    "contact": result[8],
+                    "topic_arn": result[9]
+                }
+                return {
+                    "statusCode": 200,
+                    "body": json.dumps(data)
+                }
+            else:
+                return {
+                    "statusCode": 404,
+                    "body": json.dumps({"error": "Person not found"})
+                }
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": f"Error selecting the profiles from the database\n{e}"})
+            
+        }
+    finally:
+        connection.close()
+        
+        
+# Select all profiles' data 
+def select_from_db(connection):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM missing_person")
+            result = cursor.fetchall()
+            
+            table_data = []
+            for row in result:
+                # Convert datetime to string for json 
+                last_seen_date_str = row[6].strftime('%Y-%m-%d') if isinstance(row[6], datetime) else row[6]
+                table_data.append({
+                    "person_id": row[0],
+                    "key": row[1],
+                    "face_id": row[2],
+                    "portrait" : row[3],
+                    "name" : row[4],
+                    "last_location" : row[5],
+                    "last_seen_date": last_seen_date_str,
+                    "description" : row[7],
+                    "contact" : row[8],
+                    "topic_arn": row[9]
+                })
+            json_data = json.dumps(table_data)
+            
+            return {
+                "statusCode": 200,
+                "body": json_data 
+            }
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": f"Error selecting the profile from the database\n{e}"})
+            
+        }
+    finally:
+        connection.close()
+
+    
+# Add a profile to the database
+def add_to_db(connection, s3_key, key, portrait, name, last_location, last_seen_date, description, contact):
+    try:
+        with connection.cursor() as cursor:
+            # Get the face_id after indexing the portrait in Rekognition
+            face_id = index_portrait(s3_key)
+            
+            # Check for simuilar faces already stored. If index_portrait returned an existing one, it would detect it here
+            select_sql = "SELECT * FROM missing_person WHERE face_id = (%s)";
+            select_value = (face_id,)
+            cursor.execute(select_sql, select_value)
+            result = cursor.fetchone()
+            
+            # If a similar face_id is found, delete the image stored in s3 and do not proceed with POST as the user is adding a duplicate face
+            if result:
+                s3.delete_object(Bucket=bucket_name, Key=s3_key)
+                return {
+                    "statusCode": 200,
+                    "body": json.dumps({"message": "This face is already in our database!"})
+                }
+            
+            # If not, proceed to create a topic and get the missing person's topic arn 
+            topic_arn = create_sns_topic(name)
+        
+            # Insert the profile into the database
+            insert_sql = "INSERT INTO missing_person (`key`, face_id, portrait, `name`, last_location, last_seen_date, `description`, contact, topic_arn) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            insert_values = (key, face_id, portrait, name, last_location, last_seen_date, description, contact, topic_arn) 
+            
+            cursor.execute(insert_sql, insert_values)
+            
+            # Commit the transaction
+            connection.commit()
+            
+            # Subscribe contact after adding the missing person to the database
+            subscribe_contact(topic_arn, contact)
+            
+            return {
+                "statusCode": 200,
+                "body": json.dumps({ 
+                    "key": key,
+                })
+            }
+    except Exception as e:
+        if s3_key:
+            # Delete portrait from S3
+            s3.delete_object(Bucket=bucket_name, Key=s3_key)
+            
+        if face_id:
+            # Remove the face from Rekognition collection
+            rekognition.delete_faces(CollectionId=collection_id, FaceIds=[face_id])
+        
+        if topic_arn: 
+            # Delete the SNS topic
+            sns.delete_topic(TopicArn=topic_arn)
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": f"Error inserting into database\n{e}"})
+        }
+    finally:
+        connection.close()
+
+
+# Update a profile in the database by its face_id
+def update_in_db(connection, person_id, key, portrait, name, last_location, last_seen_date, description, contact):
+    try:
+        with connection.cursor() as cursor:
+            # Retrieve the existing face_id, s3_url, contac and topic_arn
+            cursor.execute("SELECT face_id, portrait, contact, topic_arn FROM missing_person WHERE person_id = %s", (person_id,))
+            original_values = cursor.fetchone()
+            
+            old_face_id = original_values[0]
+            old_s3_url = original_values[1]
+            old_contact = original_values[2]
+            topic_arn = original_values[3]
+            
+            # Check if the src is actually an S3 url, meaning that the portrait has not been updated
+            if portrait.startswith("https://"):
+                # If it is, portrait doesn't change 
+                new_portrait = portrait
+                # Use the existing face_id 
+                new_face_id = old_face_id
+              
+            # If it is not, then delete the old image in s3 and save the new image in s3
+            else:
+                # Generate a timestamp of the current time to make the s3 key for the new image unique 
+                timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+                # Generate new s3 key 
+                s3_key = f"{name.replace(' ', '_')}_{timestamp}.jpg"
+                
+                # Decode the base64-encoded image
+                image_binary = base64.b64decode(portrait)
+                
+                # Save the new image to S3
+                new_portrait = save_to_s3(image_binary, s3_key)
+                
+                # Index the new face and get the new face_id
+                new_face_id = index_portrait(s3_key)
+                if new_face_id is None:
+                    return {
+                        "statusCode": 400,
+                        "body": json.dumps({"error": "Failed to index new face in Rekognition"})
+                    }
+                    
+                # Check for simuilar faces already stored 
+                select_sql = "SELECT person_id FROM missing_person WHERE face_id = (%s)";
+                select_value = (new_face_id,)
+                cursor.execute(select_sql, select_value)
+                result = cursor.fetchone()
+                
+                # If there is another person whose face is the same 
+                if result:
+                   # Delete the new portrait and do not proceed with update 
+                    s3.delete_object(Bucket = bucket_name, Key = s3_key)
+                    return {
+                        "statusCode": 200,
+                        "body": json.dumps({"message": "This face is already in our database!"})
+                    }
+                # If there's no one with the same face, delete original face_id
+                else: 
+                    # Remove the original face from Rekognition collection
+                    rekognition.delete_faces(
+                        CollectionId=collection_id,
+                        FaceIds=[old_face_id]
+                    )
+                
+                old_s3_key = old_s3_url.split(f"https://{bucket_name}.s3.amazonaws.com/")[1]
+                # Remove the original portrait from the database 
+                s3.delete_object(Bucket=bucket_name, Key=old_s3_key)
+                
+            # If the contact number has changed, unsubscribe the old contact and subscribe the new one
+            if contact != old_contact:
+                unsubscribe_contact(topic_arn, old_contact)
+                subscribe_contact(topic_arn, contact)
+                
+            # Update new portrait in the database
+            update_sql = """
+            UPDATE missing_person
+            SET `key` = %s, face_id = %s, portrait = %s, `name` = %s, last_location = %s, last_seen_date = %s, `description` = %s, contact = %s, topic_arn = %s
+            WHERE person_id = %s
+            """
+            update_values = (key, new_face_id, new_portrait, name, last_location, last_seen_date, description, contact, topic_arn, person_id)
+            cursor.execute(update_sql, update_values)
+            connection.commit()
+                
+            return {
+                "statusCode": 200,
+                "body": json.dumps({"message": "Person record updated successfully"})
+            }
+    
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": f"Error updating database: {e}"})
+        }
+        
+    finally:
+        connection.close()
+
+
+# Delete the profile using its person_id
+def delete_from_db(connection, person_id):
+    try:
+        with connection.cursor() as cursor:
+            # Get the profile data 
+            cursor.execute("SELECT * FROM missing_person WHERE person_id = %s", (person_id,))
+            result = cursor.fetchone()
+            if result:
+                face_id = result[2]
+                portrait = result[3]
+                topic_arn = result[9]
+                
+                # Delete portrait from S3
+                s3_key = portrait.split(f"https://{bucket_name}.s3.amazonaws.com/")[1]
+                s3.delete_object(Bucket=bucket_name, Key=s3_key)
+                
+                # Remove the face from Rekognition collection
+                rekognition.delete_faces(CollectionId=collection_id, FaceIds=[face_id])
+                
+                # Delete the SNS topic
+                sns.delete_topic(TopicArn=topic_arn)
+                
+                # Delete record from database
+                delete_sql = "DELETE FROM missing_person WHERE person_id = %s"
+                cursor.execute(delete_sql, (person_id,))
+                connection.commit()
+
+                return {
+                    "statusCode": 200,
+                    "body": json.dumps({"message": "Person record deleted successfully"})
+                }
+            else:
+                return {
+                    "statusCode": 404,
+                    "body": json.dumps({"error": "Person not found"})
+                }
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": f"Error deleting the profile from the database: {e}"})
+        }
+    finally:
+        connection.close()
+        
+    
+def lambda_handler(event, context):
+    connection = pymysql.connect(
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME
+    )
+    
+    # Get the person_id from the parametes of the API URL 
+    person_id = event["pathParameters"].get("person_id") if event.get("pathParameters") else None
+    
+    # If the request is GET
+    if event["requestContext"]["http"]["method"] == "GET":
+        # If there is a person_id, meaning to GET by person_id, use select_by_person_id()
+        if person_id:
+            return select_by_person_id(connection, person_id)
+        # If there is no person_id, meaning to GET all, use select_from_db()
+        else:
+            return select_from_db(connection)
+    # If request is to POST
+    elif event["requestContext"]["http"]["method"] == "POST":
+        # Access inputs 
+        request_body = json.loads(event["body"])
+        
+        # Get unique key
+        key = generate_key(connection)
+        
+        # Get the missing person"s name 
+        name = request_body.get("name")
+        
+        # Generate a timestamp to create a unique s3 key even if the person has a same name as an existing profile in the database 
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        # Use the name and a timestamp to create a unique s3 key for the portrait
+        s3_key = f"{name.replace(' ', '_')}_{timestamp}.jpg"
+
+        # Extract the base64-encoded image and filename from the request body
+        image_base64 = request_body.get("image")
+        
+        # Decode the base64-encoded image
+        image_binary = base64.b64decode(image_base64)
+        
+        # Save image to S3
+        portrait = save_to_s3(image_binary, s3_key)
+        
+        # Get the location the person was last seen
+        last_location = request_body.get("last_location")
+        
+        # Get the date the person was last seen 
+        last_seen_date = request_body.get("last_seen_date")
+        
+        # Get the description
+        description = request_body.get("description")
+    
+        # Get the person's close contact
+        contact = request_body.get("contact")
+        
+        return add_to_db(connection, s3_key, key, portrait, name, last_location, last_seen_date, description, contact)
+    # If the request is to PUT 
+    elif event["requestContext"]["http"]["method"] == "PUT":
+        # Access inputs 
+        request_body = json.loads(event["body"])
+        
+        # Get the person id 
+        person_id = request_body.get("person_id")
+        
+        # Get unique key
+        key = request_body.get("key")
+        
+        # Get the missing person"s name 
+        name = request_body.get("name")
+        
+        # Get the image 
+        image_data = request_body.get("image")
+        
+        # Get the location the person was last seen
+        last_location = request_body.get("last_location")
+        
+        # Get the date the person was last seen 
+        last_seen_date = request_body.get("last_seen_date")
+        
+        # Get the description
+        description = request_body.get("description")
+    
+        # Get the person's close contact
+        contact = request_body.get("contact")
+        
+        return update_in_db(connection, person_id, key, image_data, name, last_location, last_seen_date, description, contact)
+    # If request is DELETE
+    elif event["requestContext"]["http"]["method"] == "DELETE":
+        # Access inputs 
+        request_body = json.loads(event["body"])
+        
+        # Get person_id
+        person_id = request_body.get("person_id")
+        return delete_from_db(connection, person_id)

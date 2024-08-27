@@ -1,0 +1,181 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: cadetblue;
+}
+
+.navbar {
+    display: flex;
+    align-items: center;
+    background-color: rgb(0, 73, 102);
+}
+
+.navbar a {
+    color: white;
+    font-size: large;
+    text-decoration: none;
+    padding: 5px 30px 5px 30px; /* vertical padding adjusted for better appearance */
+    position: relative;
+}
+
+/* Create underline effect when mouse hovers over a tab*/
+.navbar a::after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: -3px; /* adjust based on your design */
+    left: 0;
+    width: 100%;
+    height: 5px; /* thickness of the underline */
+    background-color: transparent; /* Highlight initially transparent so that it's only visible during hover*/
+    transition: background-color 0.3s ease;
+}
+
+.navbar a:hover {
+    background-color: rgb(3, 100, 138);
+}
+
+.navbar a:hover::after {
+    background-color: white;
+}
+
+#logo {
+    height: 80px;
+}
+
+#logout {
+    margin-left: auto;
+    margin-right: 50px;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 20px;
+    cursor: pointer;
+    background-color: #eee;
+}
+
+#content {
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 94.8px);
+}
+
+#portraitSide {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-right: 2px solid #ccc;
+    background-color: #848484;
+    overflow: hidden;
+}
+
+#portrait {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+#formSide {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 20px;
+    overflow: scroll;
+}
+
+#formSpace h1 {
+    margin-top: 0px;
+    margin-bottom: 5px;
+}
+
+#formSpace p {
+    margin-top: 10px;
+    font-size: larger;
+}
+
+#portraitInput {
+    display: none;
+}
+
+#formSpace label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+#mobileFormat {
+    font-size: 17px;
+}
+
+#formSpace input[type="text"],
+#formSpace input[type="date"],
+#formSpace textarea {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+#formSpace input[type="text"], textarea {
+    font-size: 14px;
+}
+
+#formSpace textarea {
+    height: 100px;
+}
+
+#editProfile, #deleteProfile {
+    padding: 10px 20px;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    outline: oldlace 1px solid;
+    font-weight: bold;
+    color: white;
+}
+
+#editProfile {
+    background-color: #4CAF50;
+    font-size: larger;
+    margin-right: 25px;
+}
+
+#deleteProfile {
+    background-color: #f44336;
+    font-size: larger;
+}
+
+#editProfile:disabled, #deleteProfile:disabled {
+    cursor: not-allowed;
+}
+
+#keyInputForm {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#keyInputForm label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 18px;
+}
+
+#keyInputForm input[type="text"] {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+#closeButton {
+    font-size: larger;
+    margin-right: 25px;
+    align-self: center;
+}

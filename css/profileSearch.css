@@ -1,0 +1,146 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: cadetblue;
+    overflow-y: hidden;
+}
+
+.navbar {
+    display: flex;
+    align-items: center;
+    background-color: rgb(0, 73, 102);
+}
+
+.navbar a {
+    color: white;
+    font-size: large;
+    text-decoration: none;
+    padding: 5px 30px; 
+    position: relative;
+}
+
+/* Underline under tab name when user hovers over it */
+.navbar a::after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: -3px; 
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background-color: transparent;
+    transition: background-color 0.3s ease;
+}
+
+/* Darken the colour of the tab section in the navbar when hovered over*/
+.navbar a:hover {
+    background-color: rgb(3, 100, 138);
+}
+
+.navbar a:hover::after {
+    background-color: white; /* Color of underline on hover */
+}
+
+#logo {
+    height: 80px;
+}
+
+#logout {
+    margin-left: auto;
+    margin-right: 50px;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 20px;
+    cursor: pointer;
+    background-color: #eee;
+}
+
+h1 {
+    font-size: 40px;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+p {
+    font-size: 30px;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+hr {
+    margin-top: 0px;
+    margin-bottom: 10px;
+    border: 0;
+    height: 1px;
+    background-color: #333;
+
+}
+
+label {
+    display: block;
+    margin-left: 100px;
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 25px;
+}
+
+#searchInput {
+    font-size: 20px;
+    width: 98%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    margin-left: 4px;
+}
+
+#results {
+    height: calc(100vh - 94.8px - 61.4px - 49.4px - 33.8px - 60.8px);
+    overflow-y: scroll; 
+    margin-top: 10px;
+    margin-left: 5px;
+    margin-right:5px;
+}
+
+.profile {
+    text-decoration: none;
+    color: inherit;
+}
+
+.profileSpace {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border: 1px solid #ddd;
+    padding: 10px;
+}
+
+.profileSpace:hover {
+    background-color: #909090;
+}
+
+.portrait {
+    width: 150px; 
+    height: 150px;
+    margin-right: 10px;
+}
+
+.details {
+    display: flex;
+    flex-direction: column;
+    max-width: calc(100% - 160px);
+}
+
+.name {
+    margin-left: 10px;
+    text-align: left;
+    text-decoration-line: underline;
+}
+
+.details p {
+    font-size: 18px;
+    margin-left:12px;
+    text-align: left;
+}

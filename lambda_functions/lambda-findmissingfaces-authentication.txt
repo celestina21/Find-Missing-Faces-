@@ -1,0 +1,270 @@
+import json
+import boto3
+from botocore.exceptions import ClientError
+
+# Initialize clients
+cognito = boto3.client("cognito-idp")
+
+# Define user pool id and client id to use authentication methods on
+user_pool_id = "[User pool ID]"
+client_id = "[Client ID]"
+
+# Function to resent confirmation code 
+def resend_confirmation_code(username):
+    try:
+        cognito.resend_confirmation_code(
+            ClientId = client_id,
+            Username = username
+        )
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'message': 'Confirmation code sent again. Please check your email.'})
+        }
+    except ClientError as e:
+        return {
+            'statusCode': 400,
+            'body': json.dumps({'error': f"Error resending confirmation code\n{e}"})
+        }
+        
+        
+# Function to register user with their inputted username, email and password 
+def sign_up(request_body):
+    username = request_body["username"]
+    email = request_body["email"]
+    password = request_body["password"]
+
+    try:
+        # Search for users by email
+        same_email = cognito.list_users(
+            UserPoolId=user_pool_id,
+            AttributesToGet=['email'],
+            Filter=f'email="{email}"'
+        )
+        
+        # If an existing user with the ssame email was found, notify the user 
+        if len(same_email['Users']) > 0:
+            return {
+                "statusCode": 200,
+                "body": json.dumps({"message": "This email already exists. Please sign in with a different email."})
+            }
+            
+        # Else, register the user 
+        response = cognito.sign_up(
+            ClientId = client_id,
+            Username = username,
+            Password = password,
+            UserAttributes = [
+                {"Name": "email", "Value": email}
+            ]
+        )
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "user": response["UserSub"]
+            })
+        }
+    except cognito.exceptions.UsernameExistsException:
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "This username already exists."})
+        }
+    except cognito.exceptions.InvalidPasswordException:
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "This password is invalid. Please enter a password with minimum 12 characters, at at least 1 number, at least 1 special character, at least 1 uppercase letter, at least 1 lowercase letter"})
+        }
+    except ClientError as e:
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"error": f"Error registering you into Find Missing Faces\n{e}"})
+        }
+
+
+# Function to verify user's email
+def confirm_email(request_body):
+    username = request_body["username"]
+    code = request_body["code"]
+    password = request_body["password"]
+    try:
+        # Verify email
+        cognito.confirm_sign_up(
+            ClientId = client_id,
+            Username = username,
+            ConfirmationCode = code
+        )
+
+        # Automatically sign in the user after successful confirmation
+        auth_response = cognito.initiate_auth(
+            AuthFlow="USER_PASSWORD_AUTH",
+            ClientId = client_id,
+            AuthParameters={
+                "USERNAME": username,
+                "PASSWORD": password
+            }
+        )
+        auth_result = auth_response["AuthenticationResult"]
+        # Return the necessary tokens to store in the browser for state management
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "idToken": auth_result["IdToken"],
+                "accessToken": auth_result["AccessToken"],
+                "refreshToken": auth_result["RefreshToken"]
+            })
+        }
+    
+    except cognito.exceptions.ExpiredCodeException:
+        resend_confirmation_code(username)
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "The code has expired. We've sent you another confirmation code. Please try again."})
+        }
+    except cognito.exceptions.CodeMismatchException:
+        resend_confirmation_code(username)
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "Your code is incorrect. We've sent you another confirmation code. Please try again."})
+        }
+    except ClientError as e:
+        resend_confirmation_code(username)
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"message": f"Error with email confirmation or automatic login: {e}. We've sent you another confirmation code. Please try again."})
+        }
+
+
+# Find the username of the user with matching email
+def get_username_from_email(email):
+    try:
+        response = cognito.list_users(
+            UserPoolId=user_pool_id,
+            AttributesToGet=['email'],
+            Filter=f'email="{email}"'
+        )
+        users = response.get('Users', [])
+        if users:
+            return users[0]['Username']
+        return None
+    except ClientError as e:
+        print(f"Error fetching username for email: {e}")
+        return None
+
+
+# Function to check if user with the same email has their email confirmed 
+def is_email_confirmed(email):
+    username = get_username_from_email(email)
+    if not username:
+        return False
+
+    try:
+        response = cognito.admin_get_user(
+            UserPoolId='us-east-1_5ztm5L37I',  
+            Username=username
+        )
+        for attribute in response.get('UserAttributes', []):
+            if attribute['Name'] == 'email_verified' and attribute['Value'] == 'true':
+                return True
+        return False
+    except ClientError as e:
+        print(f"Error fetching user details: {e}")
+        return False
+        
+        
+# Function to log user in to the website 
+def sign_in(request_body):
+    identifier = request_body["identifier"]
+    password = request_body["password"]
+
+    try:
+        # Check if the identifier is an email 
+        if "@" in identifier:
+            if not is_email_confirmed(identifier):
+                username = get_username_from_email(identifier)
+                resend_confirmation_code(username)
+                return{
+                    "statusCode": 200,
+                    "body": json.dumps({
+                        "username": username, 
+                        "message": "Email not confirmed. Access not granted."}
+                        )
+                }
+                
+        response = cognito.initiate_auth(
+            AuthFlow = "USER_PASSWORD_AUTH",
+            ClientId = client_id,
+            AuthParameters = {
+                "USERNAME": identifier,
+                "PASSWORD": password
+            }
+        )
+        
+        auth_result = response["AuthenticationResult"]
+        # Return the necessary tokens to store in the browser for state management
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "idToken": auth_result["IdToken"],
+                "accessToken": auth_result["AccessToken"],
+                "refreshToken": auth_result["RefreshToken"]
+            })
+        }
+    except cognito.exceptions.NotAuthorizedException:
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "Incorrect username or password!"})
+        }
+    except cognito.exceptions.UserNotFoundException:
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "User not found. Are you sure you have an account with us?"})
+        }
+    except cognito.exceptions.UserNotConfirmedException:
+        resend_confirmation_code(identifier)
+        return{
+            "statusCode": 200,
+            "body": json.dumps({"message": "Email not confirmed. Access not granted."})
+        }
+    except ClientError as e:
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"error": f"Error signing you into Find Missing Faces\n{e}"})
+        }
+
+
+# Function to log user out of the website 
+def log_out(request_body):
+    access_token = request_body["accessToken"]
+
+    try:
+        # Use the access token to log out
+        cognito.global_sign_out(
+            AccessToken = access_token
+        )
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "Logged out successfully!"})
+        }
+    except ClientError as e:
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"error": f"Error logging you out of Find Missing Faces\n{e}"})
+        }
+
+
+def lambda_handler(event, context):
+    request_body = json.loads(event["body"])
+    action = request_body.get("action")
+
+    if action == "signUp":
+        return sign_up(request_body)
+    elif action == "confirmEmail":
+        return confirm_email(request_body)
+    elif action == "signIn":
+        return sign_in(request_body)
+    elif action == "logOut":
+        return log_out(request_body)
+    else:
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"error": "Invalid action"})
+        }

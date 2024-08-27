@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head> 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identify Someone</title>
+    <link rel="icon" href="./images/website-logo.png">
+    <link rel="stylesheet" href="./css/identifyPerson.css?v=1.0">
+    <script src="./js/identifyPerson.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+</head>
+<body onload="checkAuthState()">
+    <nav class="navbar">
+        <a href="index.html">
+            <img src="./images/website-logo.png" id="logo">
+        </a>
+        <a href="identifyPerson.html">Identify Someone</a>
+        <a href="reportMissingPerson.html">Add Missing Person</a>
+        <a href="profileSearch.html">Search Profiles</a>
+        <button id="logout" onclick="logOut()">Logout</button>
+    </nav>
+    <h1>Submit your image here to identify possible missing persons</h1>
+    <h2>Refresh the page if you would like to send another picture.</h2>
+    <p>Tip: Try cropping and focusing on one face at a time!</p>
+    <div id="content">
+        <div id="imageDisplay">
+        </div>
+        <div id = "uploadSide">
+            <button id="uploadButton">Upload Image</button>
+            <input type="file" id="imageInput" accept="image/*">
+        </div>
+    </div>
+</body>
+</html>

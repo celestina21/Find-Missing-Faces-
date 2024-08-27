@@ -1,0 +1,192 @@
+import pymysql
+import boto3
+from botocore.exceptions import ClientError
+import json
+import base64
+import random
+import string
+from datetime import datetime
+
+# Initialize clients
+rekognition = boto3.client("rekognition")
+
+# Define the collection id for the indexed faces to compare to 
+collection_id = "[collection ID]"
+
+# Database settings from environment variables
+DB_HOST = "[RDS Database ARN]"
+DB_USER = "[User]"
+DB_PASSWORD = "[Password]"
+DB_NAME = "FindMissingPersons" # Assuming FindMissingPersons is the name of the schema 
+
+# Detect all faces in the input image 
+def detect_faces_in_scene(image_bytes):
+    try:
+        response = rekognition.detect_faces(
+            Image={"Bytes": image_bytes},
+            Attributes=['ALL']
+        )
+        # Save the details of the faces in face_details
+        face_details = response['FaceDetails']
+        # Retrieve orientation correction to adjust bounding box values if needed
+        orientation_correction = response.get('OrientationCorrection', 'ROTATE_0')
+        return face_details, orientation_correction
+        
+    except ClientError as e:
+        return [], 'ROTATE_0'
+
+
+# Adjust the bounding box values in case the image was re-orientated 
+def adjust_bounding_box(bounding_box, orientation):
+    # If not re-orientated, the bounding box values remain the same
+    if orientation == 'ROTATE_0':
+        return bounding_box
+    elif orientation == 'ROTATE_90':
+        return {
+            'Left': 1 - (bounding_box['Top'] + bounding_box['Height']),
+            'Top': bounding_box['Left'],
+            'Width': bounding_box['Height'],
+            'Height': bounding_box['Width']
+        }
+    elif orientation == 'ROTATE_180':
+        return {
+            'Left': 1 - (bounding_box['Left'] + bounding_box['Width']),
+            'Top': 1 - (bounding_box['Top'] + bounding_box['Height']),
+            'Width': bounding_box['Width'],
+            'Height': bounding_box['Height']
+        }
+    elif orientation == 'ROTATE_270':
+        return {
+            'Left': bounding_box['Top'],
+            'Top': 1 - (bounding_box['Left'] + bounding_box['Width']),
+            'Width': bounding_box['Height'],
+            'Height': bounding_box['Width']
+        }
+    else:
+        return bounding_box
+
+
+# Compare each detected face in the image with faces of all the missing people's indexed portraits
+def search_faces_in_collection(collection_id, image_bytes, face_details, orientation):
+    search_results = []
+    for face in face_details:
+        # Adjust bounding box values if image was re-orientated
+        bounding_box = adjust_bounding_box(face['BoundingBox'], orientation)
+        
+        # Retrieve only indexed faces with minimum 10% match to the current detected face
+        response = rekognition.search_faces_by_image(
+            CollectionId=collection_id,
+            Image={"Bytes": image_bytes},
+            FaceMatchThreshold=10
+        )
+        
+        # Append the bounding box, face_id, and similarity score of the match to results 
+        for match in response['FaceMatches']:
+            search_results.append({
+                'boundingBox': bounding_box,
+                'faceId': match['Face']['FaceId'],
+                'similarity': match['Similarity']
+            })
+    return search_results
+
+
+# Retrieve the data for the matches 
+def get_missing_person_data(connection, face_ids):
+    try: 
+        with connection.cursor() as cursor:
+                if not face_ids:
+                    return []
+                placeholders = ', '.join(['%s'] * len(face_ids))
+                select_sql = f"SELECT * FROM missing_person WHERE face_id IN ({placeholders})"
+                select_values = face_ids
+                cursor.execute(select_sql, select_values)
+                return cursor.fetchall()
+    finally:
+        connection.close()
+
+
+def lambda_handler(event, context):
+    connection = pymysql.connect(
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME
+    )
+    
+    if event["requestContext"]["http"]["method"] == "POST":
+        request_body = json.loads(event["body"])
+        # Get the input image to analyse 
+        scene_image = request_body.get("scene_image")
+        
+        # Decode the base64-encoded image
+        scene_image_bytes = base64.b64decode(scene_image)
+        
+        try:
+            # Detect faces and get orientation correction in the scene image
+            face_details, orientation = detect_faces_in_scene(scene_image_bytes)
+            
+            # Search for faces in the collection
+            face_matches = search_faces_in_collection(collection_id, scene_image_bytes, face_details, orientation)
+            
+            # Extract face IDs and get missing person data
+            face_ids = [match['faceId'] for match in face_matches]
+            missing_person_data = get_missing_person_data(connection, face_ids)
+            
+            # Prepare results
+            results = []
+            # Dictionary to track the highest similarity score for each face_id to ensure no duplicate results show up
+            seen_faces = {}  
+            
+            for match in face_matches:
+                face_id = match['faceId']
+                similarity = match['similarity']
+                
+                # Update the highest similarity score for this face_id
+                if face_id not in seen_faces or similarity > seen_faces[face_id]['similarity']:
+                    seen_faces[face_id] = {
+                        'boundingBox': match['boundingBox'],
+                        'similarity': similarity
+                    }
+            
+            # Prepare the final result list based on the highest similarity score
+            for face_id, data in seen_faces.items():
+                # Find the profiles with matching face ids to the matches 
+                person_data = next((person for person in missing_person_data if person[2] == face_id), None)
+                
+                if person_data:
+                    # Compile all data together 
+                    last_seen_date_str = person_data[6].strftime('%Y-%m-%d') if isinstance(person_data[6], datetime) else person_data[6]
+                    results.append({
+                        "boundingBox": data['boundingBox'],
+                        "similarityScore": data['similarity'],
+                        "missingPerson": {
+                            "name": person_data[4],
+                            "portrait": person_data[3],
+                            "last_location": person_data[5],
+                            "last_seen_date": last_seen_date_str,
+                            "description": person_data[7],
+                            "contact": person_data[8],
+                            "topic_arn": person_data[9]
+                        }
+                    })
+            
+            if not results:
+                return {
+                    "statusCode": 200,
+                    "body": json.dumps({"message": "No matches found"})
+                }
+            
+            # Sort by similarity score and return top 3 results
+            results.sort(key=lambda x: x['similarityScore'], reverse=True)
+            top_matches = results[:3]
+            
+            return {
+                "statusCode": 200,
+                "body": json.dumps(top_matches)
+            }
+        
+        except Exception as e:
+            return {
+                "statusCode": 500,
+                "body": json.dumps({"message": f"Failed to process image\n{e}"})
+            }

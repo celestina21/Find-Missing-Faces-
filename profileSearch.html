@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Missing Faces</title>
+    <link rel="icon" href="./images/website-logo.png">
+    <link rel = "stylesheet" href = "./css/profileSearch.css?v=1.0">
+    <script src = "./js/profileSearch.js"></script> 
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html">
+            <img src="./images/website-logo.png" id="logo">
+        </a>
+        <a href="identifyPerson.html">Identify Someone</a>
+        <a href="reportMissingPerson.html">Add Missing Person</a>
+        <a href="profileSearch.html">Search Profiles</a>
+        <button id="logout" onclick="logOut()">Logout</button>
+    </nav>
+    <h1>Search</h1>
+    <p>The site will automatically search for you as you type.</p>
+    <hr></hr>
+    <label for = "searchInput">Enter missing person's full name</label>
+    <input type="text" name = "searchInput" id="searchInput">
+    <div id="results">
+    </div>
+</body>
+</html>

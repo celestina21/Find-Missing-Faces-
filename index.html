@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Missing Faces</title>
+    <link rel="icon" href="./images/website-logo.png">
+    <link rel="stylesheet" href="./css/index.css?v=1.0">
+    <script src="js/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+</head>
+<body onload="checkAuthState()">
+    <nav class="navbar">
+        <a href="index.html">
+            <img src="./images/website-logo.png" id="logo">
+        </a>
+        <a href="identifyPerson.html">Identify Someone</a>
+        <a href="reportMissingPerson.html">Add Missing Person</a>
+        <a href="profileSearch.html">Search Profiles</a>
+        <button id="logout" onclick="logOut()">Logout</button>
+    </nav>
+ 
+    <div id="introduction">
+        <h1 id="title">Welcome to Find Missing Faces</h1>
+        <div class="mission"> 
+                <h1>Our Mission</h1>
+                <h2>By harnessing the power of image recognition technology, we aim to reunite families and communities.</h2>
+                <p>Through this innovative technology, user-contributed photos are analysed for faces potentially matching those of reported missing persons, aiding in search efforts and providing hope and support. We are dedicated to creating a platform where every uploaded image has the potential to make a meaningful difference, bridging gaps and bringing closure to those in need. Together, we can empower our community to play an active role in solving cases and making a positive impact in the lives of others.</p>
+        </div>
+    </div>
+    <div class="identifyPersonGuide">
+        <h1>How YOU Can Help</h1>
+        <p>Scroll through the profiles of missing persons reported to this website in "Search Profiles", or search for a profile with a specific name that comes to mind.</p>
+        <p>If any person looks familiar to someone you may have seen and captured a photo of, go to "Identify Someone" to submit the image for processing.</p>
+        <p>The top most likely matches will be given, if found.</p>
+        <p>You may choose to notify the close contacts of any matching persons, up to your discretion.</p>
+    </div>
+    <div class="fileMissingGuide">
+        <h1>How WE Can Help You</h1>
+        <p>Go to "Add Missing Person" to submit a profile.</p>
+        <p>After submitting the profile, you are given a unique profile key. Please keep it for verification in case you want to make edits to the profile in future.</p>
+        <p><b><i>*ONLY share this key with trusted individuals.</i></b></p>
+        <p>The mobile number of the close contact entered in the profile will be contacted if any users found matches to the person whose profile you submitted and chooses to notify.</p>
+    </div>
+    <div class="chatbot">
+        <h1>Require Assistance?</h1>
+        <p>Please send an email to this address: <a id = "support" href = "mailto:support@find-missing-faces.com">support@find-missing-faces.com</a></p>
+    </div>
+</body>
+</html>

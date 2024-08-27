@@ -1,0 +1,248 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: cadetblue;
+}
+
+.navbar {
+    display: flex;
+    align-items: center;
+    background-color: rgb(0, 73, 102);
+}
+
+.navbar a {
+    color: white;
+    font-size: large;
+    text-decoration: none;
+    padding: 5px 30px;
+    position: relative;
+}
+
+/* Underline under tab name when user hovers over it */
+.navbar a::after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background-color: transparent;
+    transition: background-color 0.3s ease;
+}
+
+/* Darken the colour of the tab section in the navbar when hovered over*/
+.navbar a:hover {
+    background-color: rgb(3, 100, 138);
+}
+
+.navbar a:hover::after {
+    background-color: white; /* Color of underline on hover */
+}
+
+#logo {
+    height: 80px;
+}
+
+#logout {
+    margin-left: auto;
+    margin-right: 50px;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 20px;
+    cursor: pointer;
+    background-color: #eee;
+}
+
+h1 {
+    margin-top: 10px;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+h2 {
+    margin-top: 0px;
+    margin-bottom: 7px;
+    text-align: center;
+}
+
+p {
+    font-size: 20px;
+    margin-top: 0px;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+#content {
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 94.8px - 46px - 40.2px - 32.2px);
+    border-top: 5px solid black;
+}
+
+#imageDisplay {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-right: 2px solid #ccc;
+    background-color: #848484;
+    overflow: hidden;
+    position: relative; /* Added for positioning context */
+}
+
+#uploadedImage {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+#boundingBoxCanvas {
+    position: absolute;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none; /* Prevents canvas from blocking interactions with the image */
+}
+
+#uploadSide {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 20px;
+    overflow: scroll;
+}
+
+#uploadButton {
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    font-size: 17px;
+    cursor: pointer;
+    background-color: #eee;
+}
+
+/* Prevent user from continuously submitting photos. */
+#uploadButton:disabled {
+    cursor: not-allowed;
+}
+
+#imageInput {
+    display: none;
+}
+
+.profile {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border: 1px solid #ddd;
+    padding: 10px;
+}
+
+.portrait {
+    width: 200px; 
+    height: 200px;
+    margin-right: 10px;
+}
+
+.details {
+    display: flex;
+    flex-direction: column;
+    max-width: calc(100% - 200px);
+}
+
+.name {
+    margin-left: 10px;
+    text-align: left;
+    text-decoration-line: underline;
+}
+
+.details p {
+    font-size: 18px;
+    margin-left:12px;
+    text-align: left;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.details button {
+    border-radius: 5px;
+    padding: 5px 10px;
+    margin-top: 10px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    font-size: larger;
+    cursor: pointer;
+}
+
+.details button:disabled {
+    color: #9d9d9d;
+    background-color: #bbbbbb;
+    cursor: not-allowed;
+}
+
+#matches {
+    border-radius: 5px;
+}
+
+#missingPerson {
+    color: #cecece; 
+}
+
+#imageDetailsFormSpace h2 {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+#imageDetailsFormSpace label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+#imageDetailsFormSpace input[type="text"],
+#imageDetailsFormSpace input[type="datetime-local"],
+#imageDetailsFormSpace textarea {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+
+#imageDetailsFormSpace input[type="text"], textarea {
+    font-size: 14px;
+}
+
+#imageDetailsFormSpace textarea {
+    height: 100px;
+}
+
+#imageDetailsFormSpace .sendButton,
+#imageDetailsFormSpace .closeButton {
+    width: 48%;
+    padding: 5px;
+    border: none;
+    border-radius: 3px;
+    outline: oldlace 1px solid;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+#imageDetailsFormSpace .closeButton {
+    background-color: #f44336;
+    color: white;
+    font-size: larger;
+    margin-right: 25px;
+}
+
+#imageDetailsFormSpace .sendButton {
+    background-color: #4CAF50;
+    color: white;
+    font-size: larger;
+}

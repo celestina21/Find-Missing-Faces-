@@ -1,0 +1,37 @@
+import boto3
+import json
+import os
+
+# Initialize SNS client
+sns = boto3.client("sns")
+
+# Send the message to the subscribed contact via sms 
+def send_message(topic_arn, message):
+    try:
+        # Send message
+        response = sns.publish(
+            TopicArn=topic_arn,
+            Message=message
+        )
+
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": "Message sent successfully", "response": response})
+        }
+
+    except Exception as e:
+        print(f"Error sending message: {e}")
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": "Failed to send message"})
+        }
+        
+
+def lambda_handler(event, context):
+    # Parse the input from the event
+    request_body = json.loads(event["body"])
+    message = request_body.get("message")
+    topic_arn = request_body.get("topic_arn")
+    
+    return send_message(topic_arn, message)
+   

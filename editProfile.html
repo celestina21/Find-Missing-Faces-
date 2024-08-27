@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Missing Faces</title>
+    <link rel="icon" href="./images/website-logo.png">
+    <link rel = "stylesheet" href = "./css/editProfile.css?v=1.0">
+    <script src = "./js/editProfile.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode/build/jwt-decode.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html">
+            <img src="./images/website-logo.png" id="logo">
+        </a>
+        <a href="identifyPerson.html">Identify Someone</a>
+        <a href="reportMissingPerson.html">Add Missing Person</a>
+        <a href="profileSearch.html">Search Profiles</a>
+        <button id="logout" onclick="logOut()">Logout</button>
+    </nav>
+    <div id="content">
+        <div id="portraitSide">
+            <img id="portrait">
+        </div>
+        <div id = "formSide">
+            <div id="formSpace">
+                <h1>Edit Profile</h1>
+                <p>If you have no edits, use the navigation bar to go to another page or just press the submit button anyway.</p>
+                <p>To discard all changes, refresh the page.</p>
+                <form>
+                    <button id="uploadButton">Upload Portrait</button>
+                    <input type="file" id="newPortrait" accept="image/*">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" minlength="5" maxlength="100">
+                    <label for="last_location">Where they were last seen (optional)</label>
+                    <input type="text" id="last_location" name="last_location" maxlength="100">
+                    <label for="last_seen_date">When they were last seen</label>
+                    <input type="date" id="last_seen_date" name="last_seen_date">
+                    <label for="description">Description; any other notable details (optional)</label>
+                    <textarea id = "description" maxlength="500"></textarea>
+                    <label for="contact">Close contact<br><span id="mobileFormat">Format: +[country code][number] (eg. +766663629)</span></label>
+                    <input type="text" id="contact" name="contact" minlength="6" maxlength="15">
+                    <button id="update">Update</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

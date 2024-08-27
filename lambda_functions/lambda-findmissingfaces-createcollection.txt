@@ -1,0 +1,28 @@
+import json
+import boto3
+
+# Initialize clients
+rekognition = boto3.client("rekognition")
+
+# Create a collection to store indexed faces 
+def create_collection(collection_id):
+    try:
+        response = rekognition.create_collection(CollectionId=collection_id)
+        print(f"Collection ARN: {response['CollectionArn']}")
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'message': 'Collection created successfully.',
+                'collectionArn': response['CollectionArn']
+            })
+        }
+    except Exception as e:
+        print(f"Error creating collection: {e}")
+        return None
+    
+    
+def lambda_handler(event, context):
+    collection_id = "[collection ID]"
+    response = create_collection(collection_id)
+    
+    return response
