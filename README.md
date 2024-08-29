@@ -11,6 +11,7 @@
 
 ## Details 
 An overview and documentation of this project can be viewed in [Report](Documentation/Report.docx). 
+
 The general structure of the website with regards to AWS service interactions is as shown, with elaborations included in the Report:
 ![Diagram](Documentation/Services-Interactions-Diagram.png)
 
