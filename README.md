@@ -10,7 +10,7 @@
 - [Image Sources](#image-sources)
 
 ## Details 
-An overview and documentation of this project can be viewed in [Report](Documentation/Report.docx). 
+An overview and documentation of this project can be viewed in [Report](Documentation/Report.docx) for details on how the project was set up. 
 
 The general structure of the website with regards to AWS service interactions is as shown, with elaborations included in the Report:
 ![Diagram](Documentation/Services-Interactions-Diagram.png)
