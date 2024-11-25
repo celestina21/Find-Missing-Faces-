@@ -25,7 +25,9 @@ The general structure of the website with regards to AWS service interactions is
     - Receive email and password credentials to log a user in. 
   - Confirm Email 
     - Send a confirmation code to registering users, or users logging in who had not confirmed their email during registration.
-  ![Authentication Video Demo](https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExcnh3NWYzeHJla2YwZ3V6c3kza3A5d3RheXpveXh5MmY4MnV3emExYyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/0DHRw2WAYpmqSSu0mE/giphy.gif)
+  <p align="center">
+    <img src="[images/demo.gif](https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExcnh3NWYzeHJla2YwZ3V6c3kza3A5d3RheXpveXh5MmY4MnV3emExYyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/0DHRw2WAYpmqSSu0mE/giphy.gif)" alt="Demo" width="800">
+  </p>
 2. Database-Related
   - View all Profiles (Search page)
     - All profiles are shown in a search page if no search queries are entered, with just their portrait, name, last location (if any) and close contact shown in a preview.
