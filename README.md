@@ -25,9 +25,6 @@ The general structure of the website with regards to AWS service interactions is
     - Receive email and password credentials to log a user in. 
   - Confirm Email 
     - Send a confirmation code to registering users, or users logging in who had not confirmed their email during registration.
-  <p align="center">
-    <img src="[images/demo.gif](https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExcnh3NWYzeHJla2YwZ3V6c3kza3A5d3RheXpveXh5MmY4MnV3emExYyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/0DHRw2WAYpmqSSu0mE/giphy.gif)" alt="Demo" width="800">
-  </p>
 2. Database-Related
   - View all Profiles (Search page)
     - All profiles are shown in a search page if no search queries are entered, with just their portrait, name, last location (if any) and close contact shown in a preview.
@@ -51,8 +48,6 @@ The general structure of the website with regards to AWS service interactions is
 4. Additional
   - Users can search profiles by name in the Search page.
   - Users who submitted a scene image with matches can choose to notify any of the matches' close contacts with details of the image such as location and date. Close contacts are notified via SMS.
-    
-![Notification Video Demo](https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnRwc25wdTJuNG15MGRvcXFjMWgycXNveGN0dGQwM2F3YXFma2JpeCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/DWojgKcqXIGca4B5Sv/giphy.gif)
 
 ## Tools Used 
 - JavaScript (Client-side scripting)
