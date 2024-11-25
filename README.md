@@ -47,9 +47,9 @@ The general structure of the website with regards to AWS service interactions is
   - Faces in a scene image will be detected and each face compared with missing people's (indexed) faces in the aforementioned collection for any matches.
   - Results displayed will include previews of profiles of top 3 matches and bounding boxes around the faces in the scene image that seemingly match the portraits of these profiles.
 4. Additional
+  - Users can search profiles by name in the Search page.
   - Users who submitted a scene image with matches can choose to notify any of the matches' close contacts with details of the image such as location and date. Close contacts are notified via SMS.
 ![Notification Video Demo](https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnRwc25wdTJuNG15MGRvcXFjMWgycXNveGN0dGQwM2F3YXFma2JpeCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/DWojgKcqXIGca4B5Sv/giphy.gif)
-  - Users can search profiles by name in the Search page.
 
 ## Tools Used 
 - JavaScript (Client-side scripting)
