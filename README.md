@@ -49,6 +49,7 @@ The general structure of the website with regards to AWS service interactions is
 4. Additional
   - Users who submitted a scene image with matches can choose to notify any of the matches' close contacts with details of the image such as location and date. Close contacts are notified via SMS.
   ![Notification Video Demo](https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExZnRwc25wdTJuNG15MGRvcXFjMWgycXNveGN0dGQwM2F3YXFma2JpeCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/DWojgKcqXIGca4B5Sv/giphy.gif)
+
   - Users can search profiles by name in the Search page.
 
 ## Tools Used 
