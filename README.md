@@ -25,6 +25,7 @@ The general structure of the website with regards to AWS service interactions is
     - Receive email and password credentials to log a user in. 
   - Confirm Email 
     - Send a confirmation code to registering users, or users logging in who had not confirmed their email during registration.
+  https://github.com/user-attachments/assets/fde4df94-b653-41ee-bf15-5217a22223a4
 2. Database-Related
   - View all Profiles (Search page)
     - All profiles are shown in a search page if no search queries are entered, with just their portrait, name, last location (if any) and close contact shown in a preview.
@@ -47,6 +48,7 @@ The general structure of the website with regards to AWS service interactions is
   - Results displayed will include previews of profiles of top 3 matches and bounding boxes around the faces in the scene image that seemingly match the portraits of these profiles.
 4. Additional
   - Users who submitted a scene image with matches can choose to notify any of the matches' close contacts with details of the image such as location and date. Close contacts are notified via SMS.
+  https://github.com/user-attachments/assets/9a35074c-4689-486a-847e-1d5205ab22b9
   - Users can search profiles by name in the Search page.
 
 ## Tools Used 
