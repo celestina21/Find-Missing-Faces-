@@ -1,6 +1,6 @@
 # Find Missing Faces - Facial Recognition Website Built With AWS 
 ## A website where users can upload portraits and profiles of missing persons which will be compared with faces detected in images uploaded to the website to potentially locate them. 
-Website video demonstration [here]([https://youtu.be/Cupo4evGELk])
+Website video demonstration [here](https://youtu.be/Cupo4evGELk)
 #### Created for Cloud Technologies for AI module using AWS Learner Lab account
 
 # Table of Contents 
