@@ -67,3 +67,6 @@ The general structure of the website with regards to AWS service interactions is
 Website icon retrieved from Flaticon, by [alkhalifi design](https://www.flaticon.com/authors/alkhalifi-design)
 
 The banner image retrieved from Shutterstock, by [Ksenia Shestakova](https://www.shutterstock.com/image-photo/man-dad-having-quality-time-their-2189267477)
+
+## Notes 
+- Recommended to use AWS Secrets Manager service instead of directly inputting credential information such as user_pool_id and client_id for Amazon Cognito and DB_HOST, DB_USER, DB_PASSWORD for database. 
